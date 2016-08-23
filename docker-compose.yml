@@ -1,0 +1,59 @@
+version: '2'
+services:
+    keygen:
+        container_name: keygen
+        build: ./keygen
+        image: ender74/keygen
+        volumes:
+            - keys:/keys
+        command: /bin/true
+    jenkins:
+        container_name: jenkins
+        build: ./jenkins
+        image: ender74/jenkins
+        command: /bin/true
+    jenkins-slave:
+        container_name: jenkins-slave
+        build: ./jenkins-slave
+        image: ender74/jenkins-slave
+        command: /bin/true
+    jenkins-server:
+        container_name: jenkins-server
+        image: ender74/jenkins
+        volumes:
+            - data:/var/jenkins_home
+            - keys:/keys
+        expose:
+            - "8080"
+            - "50000"
+        depends_on:
+            - jenkins
+        networks:
+            - back-tier
+    jenkins-slave1:
+        container_name: jenkins-slave1
+        image: ender74/jenkins-slave
+        volumes:
+            - keys:/keys
+            - keys:/etc/ssh/
+        depends_on:
+            - jenkins-slave
+        networks:
+            - back-tier
+    www:
+        container_name: jenkins-www
+        build: ./www
+        ports:
+            - "80:80"
+        depends_on:
+            - jenkins-server
+        networks:
+            - back-tier
+volumes:
+  data:
+    driver: custom-volume-driver
+  keys:
+    driver: custom-volume-driver
+networks:
+  back-tier:
+    driver: overlay
